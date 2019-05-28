@@ -54,7 +54,7 @@ def getDate(soup, url):
     opt = input("\nWhich date? -> ")
     return re.sub(r"/all/(.*)/amc", "/all/" + dates[opt].get("value") + "/amc", url)
 
-def findHops(showtimes):
+def findHops(showtimes, acceptableWaitTime=0):
     """ Finds possible single hops. """
     times = {}
     hops = {}
@@ -69,6 +69,7 @@ def findHops(showtimes):
     for showing in hops:
         movie, time = showing
         endTime = getEndTime(time, showtimes[movie]["length"])
+        print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"]
         for startTime in times:
             if abs(getTimeDifference(startTime, endTime)) < 15:
                 hops[showing] += [(movie, startTime) for movie in times[startTime]]
@@ -90,7 +91,7 @@ def getEndTime(startTime, length):
     endHour = int(startTime.split(":")[0])
     endMinute = int(startTime.split(":")[1][:2])
     AMPM = startTime.split(":")[1][2:]
-    endMinute += int(length.split(":")[1])
+    endMinute += int(length.split(":")[1]) + 15 #Preview time
     if(endMinute >= 60):
         endMinute %= 60
         endHour += 1
@@ -109,7 +110,8 @@ def main():
         print "[ " + str(x) + " ] -> " + theatres[x]
     num = input("\nWhich theatre? -> ")
     showtimes = getShowtimes(links[x])
-    hops = findHops(showtimes)
+    waitTime = input("\nIn minutes, how long are you willing to wait for a movie to start? -> ")
+    hops = findHops(showtimes, waitTime)
     marathons = findMovieMarathons(hops)
     #print json.dumps(marathons, indent=4)
     pprint(marathons, indent = 4, depth=20)
