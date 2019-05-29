@@ -71,7 +71,8 @@ def findHops(showtimes, acceptableWaitTime=0):
         endTime = getEndTime(time, showtimes[movie]["length"])
         print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"]
         for startTime in times:
-            if abs(getTimeDifference(startTime, endTime)) < 15:
+            timeDiff = getTimeDifference(endTime, startTime)
+            if -15 < timeDiff < acceptableWaitTime:
                 hops[showing] += [(movie, startTime) for movie in times[startTime]]
     return hops
 def findMovieMarathons(allHops):
@@ -103,7 +104,13 @@ def getTimeDifference(startTime, endTime):
     """ Gets the time difference in minutes between two showings. """
     if "pm" in endTime:
         endTime = str(12 + int(endTime.split(":")[0])) + ":" + endTime.split(":")[1]
+    if "pm" in startTime:
+        startTime = str(12 + int(startTime.split(":")[0])) + ":" + startTime.split(":")[1]
     return int(endTime.split(":")[0]) * 60 +  int(endTime.split(":")[1][:-2]) - int(startTime.split(":")[0]) * 60 - int(startTime.split(":")[1][:-2])
+def display(marathons,  depth):
+    for movie in marathons:
+        print (depth - 1) * "      " + "|-----" + str(movie)
+        display(marathons[movie], depth + 1)
 def main():
     theatres, links = getTheatres()
     for x in xrange(len(theatres)):
@@ -114,6 +121,7 @@ def main():
     hops = findHops(showtimes, waitTime)
     marathons = findMovieMarathons(hops)
     #print json.dumps(marathons, indent=4)
-    pprint(marathons, indent = 4, depth=20)
+    display(marathons, 0)
+    #pprint(marathons, indent = 4, depth=20)
 if __name__ == "__main__":
     main()
