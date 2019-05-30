@@ -69,7 +69,7 @@ def findHops(showtimes, acceptableWaitTime=0):
     for showing in hops:
         movie, time = showing
         endTime = getEndTime(time, showtimes[movie]["length"])
-        print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"]
+        #print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"]
         for startTime in times:
             timeDiff = getTimeDifference(endTime, startTime)
             if -15 < timeDiff < acceptableWaitTime:
@@ -108,9 +108,24 @@ def getTimeDifference(startTime, endTime):
         startTime = str(12 + int(startTime.split(":")[0])) + ":" + startTime.split(":")[1]
     return int(endTime.split(":")[0]) * 60 +  int(endTime.split(":")[1][:-2]) - int(startTime.split(":")[0]) * 60 - int(startTime.split(":")[1][:-2])
 def display(marathons,  depth):
-    for movie in marathons:
-        print (depth - 1) * "      " + "|-----" + str(movie)
+    """ Displays possible movie marathons. """
+    #print sorted(list(marathons), key=lambda k : toMinutes(k[1]))
+    for movie in sorted(list(marathons), key=lambda k : toMinutes(k[1])):
+        print (depth - 1) * "      " + "|-----" + str(movie) + "--->"
         display(marathons[movie], depth + 1)
+def removeDuplicates(marathons, movieList):
+    """ Removes duplicate movies in marathons """
+    for movie in list(marathons):
+        if movie[0] in movieList:
+            del marathons[movie]
+        else:
+            newMovieList = [m for m in movieList] + [movie[0]]
+            removeDuplicates(marathons[movie], newMovieList)
+def toMinutes(time):
+    if "pm" in time:
+        time = str(12 + int(time.split(":")[0])) + ":" + time.split(":")[1]
+
+    return int(time.split(":")[0]) * 60 + int(time.split(":")[1][:-2])
 def main():
     theatres, links = getTheatres()
     for x in xrange(len(theatres)):
@@ -121,6 +136,7 @@ def main():
     hops = findHops(showtimes, waitTime)
     marathons = findMovieMarathons(hops)
     #print json.dumps(marathons, indent=4)
+    removeDuplicates(marathons, [])
     display(marathons, 0)
     #pprint(marathons, indent = 4, depth=20)
 if __name__ == "__main__":
