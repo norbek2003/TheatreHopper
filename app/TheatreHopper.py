@@ -26,15 +26,22 @@ def getTheatres():
             links.append(row.find("a").get("href"))
             theatres.append(t.text)
     return theatres, links
-
-def getShowtimes(link):
-    """ Gets the showtimes in the local theater. """
+def getShowtimesPage(link):
+    """ Returns the soup of the page containing the showtimes. """
     now = datetime.datetime.now()
     url = "https://www.amctheatres.com" + link + "/showtimes/all/" + str(now.year) + "-" + ("0" + str(now.month))[-2:] + "-" + ("0" + str(now.day))[-2:] + "/" + link.split("/")[-1] + "/all"
     request = requests.get(url)
     soup = BeautifulSoup(request.content, features="html5lib")
-    request = requests.get(getDate(soup, url))
-    soup = BeautifulSoup(request.content, features="html5lib")  
+    return url, soup
+def getShowtimes(link, url=None):
+    """ Gets the showtimes in the local theater. """
+    if not url:
+        url, soup = getShowtimesPage(link)
+        request = requests.get(askForDates(soup, url))
+        soup = BeautifulSoup(request.content, features="html5lib")  
+    else:
+        request = requests.get(url)
+        soup = BeautifulSoup(request.content, features="html5lib")  
     showtimes = {}
     for row in soup.findAll("div", {"class" : "ShowtimesByTheatre-film"}):
         showtimes[row.find("h2").text] = {
@@ -45,15 +52,19 @@ def getShowtimes(link):
             if "Showtime-disabled" not in showing.attrs["class"]:
                 showtimes[row.find("h2").text]["showtimes"].append(showing.get("aria-label"))
     return showtimes
-def getDate(soup, url):
-    """ Asks the user the date and returns the corresponding page. """
+def getDates(soup, url):
+    """ Returns the dates and resulting links """
     dates = soup.findAll("select", {"class" : "Showtimes-Action-Dropdown"})[1].findAll("option")[0 : 7]
-    options = [date.get("value") for date in dates]
+    options = [date.text for date in dates]
+    urls = [re.sub(r"/all/(.*)/amc", "/all/" + date.get("value") + "/amc", url) for date in dates]
+    return options, urls
+def askForDates(soup, url):
+    """  Asks the user which date and returns the corresponding url. """
+    dates, urls = getDates(soup, url)
     for x in xrange(len(dates)):
-        print "[ " + str(x) + " ] -> " + dates[x].text 
+        print "[ " + str(x) + " ] -> " + dates[x]
     opt = input("\nWhich date? -> ")
-    return re.sub(r"/all/(.*)/amc", "/all/" + dates[opt].get("value") + "/amc", url)
-
+    return urls[opt]
 def findHops(showtimes, acceptableWaitTime=0):
     """ Finds possible single hops. """
     times = {}
@@ -69,10 +80,11 @@ def findHops(showtimes, acceptableWaitTime=0):
     for showing in hops:
         movie, time = showing
         endTime = getEndTime(time, showtimes[movie]["length"])
-        #print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"]
+       # print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"], " ", acceptableWaitTime
         for startTime in times:
             timeDiff = getTimeDifference(endTime, startTime)
-            if -15 < timeDiff < acceptableWaitTime:
+            if -15 < timeDiff and timeDiff < acceptableWaitTime:
+                #print "adding ---->", startTime, timeDiff, (-15 < timeDiff and timeDiff < acceptableWaitTime)
                 hops[showing] += [(movie, startTime) for movie in times[startTime]]
     return hops
 def findMovieMarathons(allHops):
@@ -81,7 +93,7 @@ def findMovieMarathons(allHops):
     chain(allHops, hops)
     return hops
 def chain(allHops, hops):
-    """ Recursviely chains together movies. """
+    """ Recursively chains together movies. """
     for movie in hops:
         if hops[movie]:
             h = hops[movie]
@@ -97,11 +109,11 @@ def getEndTime(startTime, length):
         endMinute %= 60
         endHour += 1
     endHour += int(length.split(":")[0])
-    if(endHour > 12):
+    if(endHour > 12): # Do not reduce by 12! This will cause so many error. 13:25 PM is legit.
         AMPM = "pm"
     return str(endHour) + ":" + ("0" + str(endMinute))[-2:] + AMPM
 def getTimeDifference(startTime, endTime):
-    """ Gets the time difference in minutes between two showings. """
+    """ Gets the time difference in minutes between two times. """
     if "pm" in endTime:
         endTime = str(12 + int(endTime.split(":")[0])) + ":" + endTime.split(":")[1]
     if "pm" in startTime:
@@ -126,6 +138,7 @@ def toMinutes(time):
         time = str(12 + int(time.split(":")[0])) + ":" + time.split(":")[1]
 
     return int(time.split(":")[0]) * 60 + int(time.split(":")[1][:-2])
+
 def main():
     theatres, links = getTheatres()
     for x in xrange(len(theatres)):
@@ -135,9 +148,8 @@ def main():
     waitTime = input("\nIn minutes, how long are you willing to wait for a movie to start? -> ")
     hops = findHops(showtimes, waitTime)
     marathons = findMovieMarathons(hops)
-    #print json.dumps(marathons, indent=4)
     removeDuplicates(marathons, [])
     display(marathons, 0)
-    #pprint(marathons, indent = 4, depth=20)
 if __name__ == "__main__":
     main()
+    

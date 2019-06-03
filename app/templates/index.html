@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <meta name="generator"
+        content="HTML Tidy for HTML5 (experimental) for Windows https://github.com/w3c/tidy-html5/tree/c63cc39" />
+        <title>Home</title>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css"
+        integrity="sha384-PmY9l28YgO4JwMKbTvgaS7XNZJ30MK9FAZjjzXtlqyZCqBY6X6bXIkM++IkyinN+" crossorigin="anonymous" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+        integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+    </head>
+    
+    
+    
+    <body>	
+	<div class="container">
+	<h2>Theater Hopper</h2>
+
+	  <form method="post" action="">
+		<div class="form-group">
+		  <label for="example-number-input" class="col-2 col-form-label">Please select a local theatre: </label>
+		  <select name="theatre" class="form-control" onchange="this.form.submit()">
+				<option value="none">   </option>
+				{% for theatre, link in theatreList %}
+						 <option value="{{link}}" {{ 'selected' if link == request.form["theatre"] }}>{{theatre}}</option>
+				{% endfor %}
+			</select>
+		  <br>
+	
+		</div>
+		
+		{% if dates is defined %}
+		    <div class="form-group">		
+		    <label for="example-number-input" class="col-2 col-form-label">Please select a date: </label>
+			<select name="dates" class="form-control" onchange="this.form.submit()">
+			    <option value="none">   </option>
+			    {% for mDate, link in dates %}
+				<option value="{{link}}" {{ 'selected' if link == request.form["dates"] }}>{{mDate}}</option>
+			    {% endfor %}
+			</select>
+			<br>
+			
+		    </div>
+		{% endif %}
+		
+		<div class="form-group">
+		    <label for="example-number-input" class="col-2 col-form-label">How many minutes you willing to wait for a movie to start : </label>
+		    <div class="col-10">
+			<input class="form-control" type="number" value="{{20 if not request.form["maxWait"] else request.form["maxWait"]}}" name="maxWait">
+		    </div>
+		</div>
+		
+	  </form>
+	</div>
+	
+	
+	
+       
+	{% if marathons is defined %}
+	    <div class="container">
+	    <ul id="myUL">
+	      <li><span class="caret">Possible Theater Hopping Trips.</span>
+
+		    {%- for item in marathons recursive%}
+			<ul class="nested">
+			    <li>
+				<span class="caret">{{item}}</span>
+				{% if marathons[item] is defined %}
+				    {{loop(marathons[item])}}
+				{% endif%}
+			    </li>
+			</ul>
+		    {%- endfor%}
+		</li>
+	    <ul>
+
+	    </div>
+	{% endif %}
+	<script>
+	    var toggler = document.getElementsByClassName("caret");
+	    var i;
+	    
+	    for (i = 0; i < toggler.length; i++) {
+	      toggler[i].addEventListener("click", function() {
+		this.parentElement.querySelector(".nested").classList.toggle("active");
+		this.classList.toggle("caret-down");
+	      });
+	    }
+	</script>
+    </body>
+</html>
