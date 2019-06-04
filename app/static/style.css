@@ -11,13 +11,30 @@ ul, #myUL {
 
 /* Style the caret/arrow */
 .caret {
+  display: initial !important;
+  width: initial !important;
+  height: initial !important;
+  margin-left: initial !important;
+  vertical-align: middle !important;
+  border-top: initial !important;
+  border-top: initial !important;
+  border-right: initial !important;
+  border-left: initial !important;
   cursor: pointer; 
   user-select: none; /* Prevent text selection */
 }
 
 /* Create the caret/arrow with a unicode, and style it */
+
 .caret::before {
   content: "\25B6";
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.lonely::before {
+  content: "\25CF";
   color: black;
   display: inline-block;
   margin-right: 6px;

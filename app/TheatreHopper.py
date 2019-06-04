@@ -76,16 +76,14 @@ def findHops(showtimes, acceptableWaitTime=0):
             times[time].append(movie)
     for time in times:
         for movie in times[time]:
-            hops[(movie, time)] = []
+            hops[(movie, time, getEndTime(time, showtimes[movie]["length"]))] = []
     for showing in hops:
-        movie, time = showing
-        endTime = getEndTime(time, showtimes[movie]["length"])
-       # print movie, " ",time, " ", endTime, " ", showtimes[movie]["length"], " ", acceptableWaitTime
+        movie, time, endTime = showing
+        #endTime = showinggetEndTime(time, showtimes[movie]["length"])
         for startTime in times:
             timeDiff = getTimeDifference(endTime, startTime)
             if -15 < timeDiff and timeDiff < acceptableWaitTime:
-                #print "adding ---->", startTime, timeDiff, (-15 < timeDiff and timeDiff < acceptableWaitTime)
-                hops[showing] += [(movie, startTime) for movie in times[startTime]]
+                hops[showing] += [(movie, startTime, getEndTime(startTime, showtimes[movie]["length"])) for movie in times[startTime]]
     return hops
 def findMovieMarathons(allHops):
     """ Finds all possible chains of movies. """
